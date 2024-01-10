@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  web:
+    depends_on: 
+      - api
+
+    build: ./frontend
+    
+    ports:
+      - 5173:5173
+
+    environment:
+      VITE_API_URL: http://localhost:8000
+
+    develop:
+      watch:
+        - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/package-lock.json
+          action: rebuild
+
+        - path: ./frontend
+          target: /app
+          action: sync
+
+  api: 
+    depends_on: 
+      - db
+
+    build: ./backend
+    
+    ports: 
+      - 8000:8000
+
+    environment: 
+      DB_URL: mongodb://db/anime
+    
+    # establish docker compose watch mode for the api service
+    develop:
+      # specify the files to watch for changes
+      watch:
+        # it'll watch for changes in package.json and package-lock.json and rebuild the container and image if there are any changes
+        - path: ./backend/package.json
+          action: rebuild
+        - path: ./backend/package-lock.json
+          action: rebuild
+        
+        # it'll watch for changes in the backend directory and sync the changes with the container real time
+        - path: ./backend
+          target: /app
+          action: sync
+
+  db:
+    image: mongo:latest
+
+    ports:
+      - 27017:27017
+
+    volumes:
+      - anime:/data/db
+
+volumes:
+  anime:
